@@ -46,7 +46,16 @@ jobs:
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
-          working-directory: .
+          working_directory: .
+          format: sarif
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          soft_fail: true
+
+      - name: Upload tfsec report to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false -no-color
