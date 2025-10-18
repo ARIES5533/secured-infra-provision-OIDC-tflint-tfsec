@@ -35,17 +35,23 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Fmt Check
+      # Step 1: Check Terraform formatting
+      - name: Terraform Format Check
         run: terraform fmt -check
 
-      - name: Terraform Validate
+      # Step 2: Validate Terraform configuration
+      - name: Terraform Validate Configuration
         run: terraform validate
 
-      - name: Terraform Lint
+      # Step 3: Run Terraform linting with TFLint
+      - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
-      - run: tflint --init && tflint
 
-      - name: Run tfsec (Action)
+      - name: Run TFLint Analysis
+        run: tflint --init && tflint
+
+      # Step 4: Run static security scan with tfsec
+      - name: Run tfsec Security Scan
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: .
@@ -54,7 +60,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           soft_fail: true
 
-      - name: Upload tfsec report
+      # Step 5: Upload tfsec results to GitHub Security tab
+      - name: Upload tfsec Security Report
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: tfsec.sarif
