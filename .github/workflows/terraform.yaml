@@ -14,6 +14,7 @@ jobs:
       id-token: write
       contents: read
       security-events: write 
+      issues: write
 
     steps:
       - name: Checkout code
@@ -68,7 +69,7 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.token }}
-          approvers: your-github-username
+          approvers: ARIES5533
           minimum-approvals: 1
           issue-title: "Production Terraform Apply Approval"
           issue-body: "Please approve this Terraform apply for the main branch."

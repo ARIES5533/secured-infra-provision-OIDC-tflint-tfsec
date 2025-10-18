@@ -98,6 +98,20 @@ resource "aws_instance" "web" {
   }
 }
 
+# --- EC2 Instance ---
+resource "aws_instance" "web2" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
+
+  tags = {
+    Name = web2
+  }
+}
+
 # --- Fetch Latest Ubuntu AMI ---
 data "aws_ami" "ubuntu" {
   most_recent = true
