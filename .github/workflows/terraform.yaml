@@ -24,6 +24,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.0
+          
+      - name: Terraform Init
+        run: terraform init -input=false
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
@@ -77,9 +80,6 @@ jobs:
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
           role-session-name: samplerolesession
           aws-region: us-east-1
-
-      - name: Terraform Init
-        run: terraform init -input=false
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false -no-color
