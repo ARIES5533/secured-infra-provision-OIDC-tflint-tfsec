@@ -1,0 +1,14 @@
+# Terraform directories and files
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+crash.log
+
+# If you store local tfvars
+*.tfvars
+*.tfvars.json
+
+# Optional: IDE and OS junk
+.DS_Store
+*.log
