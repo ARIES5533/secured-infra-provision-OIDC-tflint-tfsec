@@ -14,8 +14,10 @@ jobs:
     name: Security & Compliance Scan
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       security-events: write
+      issues: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
