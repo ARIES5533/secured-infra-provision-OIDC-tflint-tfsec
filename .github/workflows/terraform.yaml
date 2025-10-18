@@ -62,6 +62,24 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false -no-color
 
+      # Manual approval for PROD (main branch)
+      - name: Wait for manual approval before Apply
+        if: github.ref == 'refs/heads/main'
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: your-github-username
+          minimum-approvals: 1
+          issue-title: "Production Terraform Apply Approval"
+          issue-body: "Please approve this Terraform apply for the main branch."
+
+
+      # Terraform Apply for all branches
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref != 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+
+      # Apply for main only after approval
+      - name: Terraform Apply (Production)
+        if: github.ref == 'refs/heads/main'
         run: terraform apply -input=false -auto-approve tfplan
