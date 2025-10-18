@@ -7,17 +7,15 @@ on:
       - testing
 
 jobs:
-  # -------------------------------
-  # 🔐 SECURITY JOB: Linting + tfsec
-  # -------------------------------
-  security:
-    name: Security & Compliance Scan
+  terraform:
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       id-token: write
       contents: read
-      security-events: write
+      security-events: write 
       issues: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,7 +24,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.0
-      
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -37,17 +35,23 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Fmt Check
+      # Step 1: Check Terraform formatting
+      - name: Terraform Format Check
         run: terraform fmt -check
 
-      - name: Terraform Validate
+      # Step 2: Validate Terraform configuration
+      - name: Terraform Validate Configuration
         run: terraform validate
 
+      # Step 3: Run Terraform linting with TFLint
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
-      - run: tflint --init && tflint
 
-      - name: Run tfsec scan
+      - name: Run TFLint Analysis
+        run: tflint --init && tflint
+
+      # Step 4: Run static security scan with tfsec
+      - name: Run tfsec Security Scan
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: .
@@ -56,37 +60,17 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           soft_fail: true
 
-      - name: Upload tfsec report
+      # Step 5: Upload tfsec results to GitHub Security tab
+      - name: Upload tfsec Security Report
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: tfsec.sarif
 
-  # -------------------------------
-  # 🚀 DEPLOY JOB: Terraform Plan + Apply
-  # -------------------------------
-  deploy:
-    name: Terraform Deploy
-    runs-on: ubuntu-latest
-    needs: security     # 👈 ensures security job runs first
-    permissions:
-      id-token: write
-      contents: read
-      issues: write
-    environment: production
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.10.0
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false -no-color
 
-      # 🟡 Manual approval before prod apply
+      # Manual approval for PROD (main branch)
       - name: Wait for manual approval before Apply
         if: github.ref == 'refs/heads/main'
         uses: trstringer/manual-approval@v1
@@ -97,12 +81,13 @@ jobs:
           issue-title: "Production Terraform Apply Approval"
           issue-body: "Please approve this Terraform apply for the main branch."
 
-      # ✅ Auto apply for testing branch
-      - name: Terraform Apply (Auto)
-        if: github.ref == 'refs/heads/testing'
+
+      # Terraform Apply for all branches
+      - name: Terraform Apply
+        if: github.ref != 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
 
-      # ✅ Apply after approval for prod
+      # Apply for main only after approval
       - name: Terraform Apply (Production)
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -input=false -auto-approve tfplan
