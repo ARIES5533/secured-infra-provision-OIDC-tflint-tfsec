@@ -5,7 +5,7 @@ terraform {
     region  = "us-east-1"
     encrypt = true
 
-    # enable native locking
+    ## enable native locking
     use_lockfile = true
   }
 }
