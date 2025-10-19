@@ -101,12 +101,18 @@ resource "aws_instance" "web" {
 
   user_data = <<-EOF
     #!/bin/bash
+    exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+    set -xe
+
     apt-get update -y
-    apt-get install -y openjdk-11-jdk wget gnupg2
+    apt-get install -y openjdk-11-jdk wget gnupg2 curl apt-transport-https
+
     wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | apt-key add -
     sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+
     apt-get update -y
     apt-get install -y jenkins
+
     systemctl enable jenkins
     systemctl start jenkins
   EOF
