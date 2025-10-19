@@ -66,8 +66,8 @@ resource "aws_security_group" "ec2_sg" {
 
   ingress {
     description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -91,7 +91,26 @@ resource "aws_instance" "web" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   key_name                    = var.key_name
+  iam_instance_profile        = "ssm-role"
   associate_public_ip_address = true
+
+  root_block_device {
+    volume_size = 50
+    volume_type = "gp3"
+  }
+
+  user_data = <<-EOF
+    #!/bin/bash
+    apt-get update -y
+    apt-get install -y openjdk-11-jdk wget gnupg2
+    wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | apt-key add -
+    sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+    apt-get update -y
+    apt-get install -y jenkins
+    systemctl enable jenkins
+    systemctl start jenkins
+  EOF
+
 
   tags = {
     Name = var.ec2_name
